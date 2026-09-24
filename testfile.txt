@@ -1,5 +1,0 @@
-# Scrum Master - NIEVA, Kenneth 
-# UI Designer - NIEVA, Kenneth 
-# DB Admin - FELICES, John Paul A.
-# Dev - CLARENCE, Llamas
-# Tester - SUAREZ, Angelo B. 
