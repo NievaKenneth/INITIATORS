@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Manage your HOPE ERP workspace and team members.">
+    <meta name="theme-color" content="#f5f8f6">
+    <title>User Management | HOPE ERP</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to user management</a>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="app-header-inner container">
+          <a class="brand" href="index.html" aria-label="HOPE ERP home">
+            <span class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8.5 12h2l1.2-2.3 1.6 4.6 1.1-2.3h1.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span>HOPE <span aria-hidden="true">ERP</span></span>
+          </a>
+          <nav class="app-nav" aria-label="Workspace navigation">
+            <a href="dashboard.html" aria-current="page">Users</a>
+            <button id="open-permissions-nav" type="button" aria-haspopup="dialog" aria-controls="permissions-dialog">Roles &amp; Rights</button>
+          </nav>
+          <div class="app-user">
+            <span class="user-avatar avatar-gold" aria-hidden="true">JD</span>
+            <span>Jordan Davis</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="app-main container" id="main">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> Workspace settings</p>
+            <h1>User Management</h1>
+            <p>Manage your team members and their access to HOPE ERP.</p>
+          </div>
+          <button class="button button-primary" type="button">+ Add user</button>
+        </div>
+
+        <section class="table-card" aria-labelledby="users-title">
+          <div class="table-toolbar">
+            <div>
+              <h2 id="users-title">Team members</h2>
+              <p>Manage user access and assigned roles.</p>
+            </div>
+            <button class="button button-secondary" id="open-permissions" type="button" aria-haspopup="dialog" aria-controls="permissions-dialog">Roles &amp; Rights</button>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <caption class="visually-hidden">Sample team member records showing name, email, role, status, and available action.</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Role</th>
+                  <th scope="col">Status</th>
+                  <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="user-cell"><span class="user-avatar" aria-hidden="true">MC</span>Morgan Chen</span></td>
+                  <td>morgan.chen@example.com</td>
+                  <td>Administrator</td>
+                  <td><span class="status-badge">Active</span></td>
+                  <td><button class="table-action" type="button" aria-label="Edit Morgan Chen">Edit</button></td>
+                </tr>
+                <tr>
+                  <td><span class="user-cell"><span class="user-avatar avatar-blue" aria-hidden="true">RP</span>Riley Patel</span></td>
+                  <td>riley.patel@example.com</td>
+                  <td>Manager</td>
+                  <td><span class="status-badge">Active</span></td>
+                  <td><button class="table-action" type="button" aria-label="Edit Riley Patel">Edit</button></td>
+                </tr>
+                <tr>
+                  <td><span class="user-cell"><span class="user-avatar avatar-gold" aria-hidden="true">SK</span>Sam Kim</span></td>
+                  <td>sam.kim@example.com</td>
+                  <td>Team member</td>
+                  <td><span class="status-badge">Active</span></td>
+                  <td><button class="table-action" type="button" aria-label="Edit Sam Kim">Edit</button></td>
+                </tr>
+                <tr>
+                  <td><span class="user-cell"><span class="user-avatar" aria-hidden="true">AT</span>Alex Taylor</span></td>
+                  <td>alex.taylor@example.com</td>
+                  <td>Team member</td>
+                  <td><span class="status-badge status-pending">Invited</span></td>
+                  <td><button class="table-action" type="button" aria-label="Edit Alex Taylor">Edit</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="table-note">Showing 4 sample team members</p>
+        </section>
+      </main>
+
+      <dialog class="permissions-dialog" id="permissions-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+        <div class="dialog-header">
+          <div>
+            <h2 id="dialog-title">Roles &amp; Rights</h2>
+            <p id="dialog-description">Choose the access rights assigned to a workspace role.</p>
+          </div>
+          <form method="dialog">
+            <button class="dialog-close" type="submit" aria-label="Close roles and rights dialog">&times;</button>
+          </form>
+        </div>
+        <form method="dialog">
+          <div class="dialog-body">
+            <div class="form-field">
+              <label class="form-label" for="role">Workspace role</label>
+              <select class="form-control" id="role" name="role">
+                <option>Administrator</option>
+                <option>Manager</option>
+                <option>Team member</option>
+              </select>
+            </div>
+            <fieldset class="permission-list">
+              <legend>Access rights</legend>
+              <label class="permission-option">
+                <input type="checkbox" name="rights" value="users" checked>
+                <span><strong>Manage users</strong><span>Invite, update, and deactivate workspace members.</span></span>
+              </label>
+              <label class="permission-option">
+                <input type="checkbox" name="rights" value="roles" checked>
+                <span><strong>Manage roles and rights</strong><span>Assign workspace roles and configure permissions.</span></span>
+              </label>
+              <label class="permission-option">
+                <input type="checkbox" name="rights" value="reports">
+                <span><strong>View reports</strong><span>Access workspace reports and activity summaries.</span></span>
+              </label>
+              <label class="permission-option">
+                <input type="checkbox" name="rights" value="settings">
+                <span><strong>Manage settings</strong><span>Update workspace preferences and configuration.</span></span>
+              </label>
+            </fieldset>
+          </div>
+          <div class="dialog-footer">
+            <button class="button button-secondary" type="submit">Cancel</button>
+            <button class="button button-primary" type="submit">Done</button>
+          </div>
+        </form>
+      </dialog>
+    </div>
+    <script>
+      const permissionsDialog = document.getElementById("permissions-dialog");
+      const openPermissionsButton = document.getElementById("open-permissions");
+      const openPermissionsNav = document.getElementById("open-permissions-nav");
+
+      openPermissionsButton.addEventListener("click", () => {
+        permissionsDialog.showModal();
+      });
+
+      openPermissionsNav.addEventListener("click", () => {
+        permissionsDialog.showModal();
+      });
+    </script>
+  </body>
+</html>
