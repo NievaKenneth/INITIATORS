@@ -126,7 +126,7 @@ as $$
   );
 $$;
 
-revoke all on function public.is_approved_superadmin() from public, anon;
+revoke all on function public.is_approved_superadmin() from public, anon, authenticated;
 grant execute on function public.is_approved_superadmin() to authenticated;
 
 create policy profiles_select_own_or_superadmin
@@ -179,10 +179,22 @@ begin
       message = 'Only an approved superadmin can review profiles';
   end if;
 
-  if p_decision not in ('approved', 'rejected') then
+  if p_user_id is null then
+    raise exception using
+      errcode = '22023',
+      message = 'Target user ID is required';
+  end if;
+
+  if p_decision is null or p_decision not in ('approved', 'rejected') then
     raise exception using
       errcode = '22023',
       message = 'Decision must be approved or rejected';
+  end if;
+
+  if p_user_id = reviewer_id and p_decision = 'rejected' then
+    raise exception using
+      errcode = '22023',
+      message = 'A superadmin cannot reject their own profile';
   end if;
 
   update public.profiles
@@ -200,7 +212,7 @@ begin
 end;
 $$;
 
-revoke all on function public.review_profile(uuid, text, text) from public, anon;
+revoke all on function public.review_profile(uuid, text, text) from public, anon, authenticated;
 grant execute on function public.review_profile(uuid, text, text) to authenticated;
 
 create function public.set_profile_access(
@@ -220,16 +232,29 @@ begin
       message = 'Only an approved superadmin can change profile access';
   end if;
 
-  if p_role not in ('superadmin', 'admin', 'user') then
+  if p_user_id is null then
+    raise exception using
+      errcode = '22023',
+      message = 'Target user ID is required';
+  end if;
+
+  if p_role is null or p_role not in ('superadmin', 'admin', 'user') then
     raise exception using
       errcode = '22023',
       message = 'Invalid profile role';
   end if;
 
-  if p_status not in ('pending', 'approved', 'rejected', 'blocked') then
+  if p_status is null or p_status not in ('pending', 'approved', 'rejected', 'blocked') then
     raise exception using
       errcode = '22023',
       message = 'Invalid profile status';
+  end if;
+
+  if p_user_id = auth.uid()
+    and (p_role <> 'superadmin' or p_status <> 'approved') then
+    raise exception using
+      errcode = '22023',
+      message = 'A superadmin cannot remove their own superadmin access';
   end if;
 
   update public.profiles
@@ -245,7 +270,7 @@ begin
 end;
 $$;
 
-revoke all on function public.set_profile_access(uuid, text, text) from public, anon;
+revoke all on function public.set_profile_access(uuid, text, text) from public, anon, authenticated;
 grant execute on function public.set_profile_access(uuid, text, text) to authenticated;
 
 create function public.set_module_permissions(
@@ -266,6 +291,37 @@ begin
     raise exception using
       errcode = '42501',
       message = 'Only an approved superadmin can change module permissions';
+  end if;
+
+  if p_user_id is null then
+    raise exception using
+      errcode = '22023',
+      message = 'Target user ID is required';
+  end if;
+
+  if p_module_name is null
+    or pg_catalog.length(pg_catalog.btrim(p_module_name)) = 0
+    or pg_catalog.length(p_module_name) > 100 then
+    raise exception using
+      errcode = '22023',
+      message = 'Module name must contain 1 to 100 non-whitespace characters';
+  end if;
+
+  if p_can_view is null or p_can_add is null
+    or p_can_edit is null or p_can_delete is null then
+    raise exception using
+      errcode = '22023',
+      message = 'All module permission values are required';
+  end if;
+
+  if not exists (
+    select 1
+    from public.profiles
+    where id = p_user_id
+  ) then
+    raise exception using
+      errcode = '22023',
+      message = 'Target profile does not exist';
   end if;
 
   insert into public.module_permissions (
@@ -294,7 +350,7 @@ end;
 $$;
 
 revoke all on function public.set_module_permissions(uuid, text, boolean, boolean, boolean, boolean)
-  from public, anon;
+  from public, anon, authenticated;
 grant execute on function public.set_module_permissions(uuid, text, boolean, boolean, boolean, boolean)
   to authenticated;
 
@@ -314,11 +370,35 @@ begin
       message = 'Only an approved superadmin can delete module permissions';
   end if;
 
+  if p_user_id is null then
+    raise exception using
+      errcode = '22023',
+      message = 'Target user ID is required';
+  end if;
+
+  if p_module_name is null
+    or pg_catalog.length(pg_catalog.btrim(p_module_name)) = 0
+    or pg_catalog.length(p_module_name) > 100 then
+    raise exception using
+      errcode = '22023',
+      message = 'Module name must contain 1 to 100 non-whitespace characters';
+  end if;
+
+  if not exists (
+    select 1
+    from public.profiles
+    where id = p_user_id
+  ) then
+    raise exception using
+      errcode = '22023',
+      message = 'Target profile does not exist';
+  end if;
+
   delete from public.module_permissions
   where user_id = p_user_id
     and module_name = p_module_name;
 end;
 $$;
 
-revoke all on function public.delete_module_permissions(uuid, text) from public, anon;
+revoke all on function public.delete_module_permissions(uuid, text) from public, anon, authenticated;
 grant execute on function public.delete_module_permissions(uuid, text) to authenticated;
