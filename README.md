@@ -11,7 +11,7 @@
 
 Copy `.env.example` to `.env.local` and fill in the project URL and publishable key from your Supabase project settings. `.env.local` is ignored by Git. Never put a Supabase secret/service-role key in client-accessible environment variables.
 
-The Supabase client is available from `src/lib/supabase/client.ts`. To check connectivity, request `/api/health/supabase`. It returns `{"status":"ok"}` on success and a 503 status when configuration or connectivity is unavailable.
+The Supabase client is available from `src/lib/supabase/client.ts`. To check Supabase Auth API availability, request `/api/health/supabase`. The endpoint sends a read-only `GET /auth/v1/health` with the publishable key and returns a status that identifies the checked service. It does not check database connectivity or schema readiness; both are reported as `not_checked`. Failures are logged server-side using the HTTP status or error type only. Keys and response bodies are not logged or returned.
 
 ## Authentication Backend
 
@@ -291,9 +291,9 @@ JSON endpoints:
 - `POST /api/auth/forgot-password`
 - `POST /api/auth/reset-password`
 
-Password recovery uses a PKCE callback at `/auth/callback`. The callback destination is fixed to `/reset-password`, and the reset endpoint requires a verified Supabase recovery session.
+Signup confirmation and password recovery use the PKCE callback at `/auth/callback`. Signup confirmations are exchanged for a session and sent to `/login`; recovery links are exchanged and sent to `/reset-password`. These destinations are fixed internal paths, and the reset endpoint requires a verified Supabase recovery session.
 
-Login, registration, forgot-password, and reset-password UI forms have not yet been connected. The profile and permission tables and their RLS policies are defined in the migration below. Roles are not accepted from registration input. The dashboard requires an approved `admin` or `superadmin` profile; protected module routes and admin APIs have not been implemented.
+The authentication UI uses the corresponding public API endpoints. The profile and permission tables and their RLS policies are defined in the migration below. Roles are not accepted from registration input. The dashboard requires an approved `admin` or `superadmin` profile; protected module routes and admin APIs have not been implemented.
 
 ### Local test accounts
 
@@ -351,7 +351,7 @@ and `admin`; use the SQL authorization checks above for broader RLS and RPC
 coverage. No superadmin permissions beyond those declared by the migration
 should be inferred from the dashboard's demo controls.
 
-For local testing, set `APP_URL` to `http://localhost:3000`. Add the callback URL to Supabase Auth's allowed redirect URLs and configure the recovery email template. Verify the full flow using your actual Supabase project.
+For local testing, set `APP_URL` to `http://localhost:3000`. The local Supabase config allows the localhost and 127.0.0.1 callback URLs. For hosted projects, set `APP_URL` to the app's trusted origin and add the exact `${APP_URL}/auth/callback` URL to Supabase Auth's allowed redirect URLs under Authentication > URL Configuration. Set the Site URL to the production app origin; `emailRedirectTo` sends confirmation and recovery links to the callback. Configure the recovery email template and verify the full flow using your actual Supabase project.
 
 ## Getting Started
 

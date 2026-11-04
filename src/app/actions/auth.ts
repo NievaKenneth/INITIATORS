@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import {
+  normalizeFullName,
   validateCredentials,
   validateLoginCredentials,
   type AuthField,
@@ -50,13 +51,27 @@ export async function register(
     return validated.state;
   }
 
+  const fullName = normalizeFullName(formData.get("fullName"));
+
+  if (!fullName) {
+    return {
+      success: false,
+      message: "Name must be between 2 and 100 valid characters.",
+    };
+  }
+
   if (!getSupabasePublicConfig()) {
     return { success: false, message: unavailableMessage };
   }
 
   try {
     const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase.auth.signUp(validated.credentials);
+    const { data, error } = await supabase.auth.signUp({
+      ...validated.credentials,
+      options: {
+        data: { full_name: fullName },
+      },
+    });
 
     if (error) {
       return {
@@ -66,11 +81,41 @@ export async function register(
       };
     }
 
+    if (data.session) {
+      if (!data.user) {
+        console.error(
+          "Supabase registration returned a session without a user.",
+        );
+        return { success: false, message: unavailableMessage };
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", data.user.id)
+        .maybeSingle();
+
+      if (profileError || !profile) {
+        console.error("New Supabase user profile could not be verified.", {
+          queryFailed: Boolean(profileError),
+        });
+        const { error: signOutError } = await supabase.auth.signOut({
+          scope: "local",
+        });
+        if (signOutError) {
+          console.error(
+            "Supabase session cleanup failed after profile verification.",
+          );
+        }
+        return { success: false, message: unavailableMessage };
+      }
+    }
+
     return {
       success: true,
       message: data.session
-        ? "Your account has been created."
-        : "Check your email for a confirmation link to finish creating your account.",
+        ? "Your account has been created and is pending approval."
+        : "Check your email for a confirmation link to finish creating your account. Your account will be pending approval.",
     };
   } catch {
     console.error("Supabase registration request failed.");

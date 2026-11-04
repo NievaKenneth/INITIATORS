@@ -12,10 +12,23 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const code = request.nextUrl.searchParams.get("code");
-  const destination = new URL("/reset-password", appOrigin);
+  const searchParams = request.nextUrl.searchParams;
+  const type = searchParams.get("type");
+  const requestedDestination = searchParams.get("next");
+  const flow =
+    type === "signup"
+      ? "signup"
+      : type === "recovery" ||
+          (!type && requestedDestination === "/reset-password")
+        ? "recovery"
+        : null;
+  const destination = new URL(
+    flow === "recovery" ? "/reset-password" : "/login",
+    appOrigin,
+  );
+  const code = searchParams.get("code");
 
-  if (!code) {
+  if (!flow || !code) {
     destination.searchParams.set("error", "invalid_link");
     return NextResponse.redirect(destination);
   }
@@ -26,6 +39,8 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       destination.searchParams.set("error", "invalid_link");
+    } else if (flow === "signup") {
+      destination.searchParams.set("confirmed", "1");
     }
 
     return NextResponse.redirect(destination);

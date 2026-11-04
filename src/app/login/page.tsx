@@ -1,9 +1,31 @@
 
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+
+function LoginCallbackNotice() {
+  const searchParams = useSearchParams();
+  const message =
+    searchParams.get("confirmed") === "1"
+      ? "Your email is confirmed. You can sign in; account access still requires approval."
+      : searchParams.get("error") === "invalid_link"
+        ? "This confirmation link is invalid or has expired."
+        : searchParams.get("error") === "unavailable"
+          ? "Confirmation is temporarily unavailable. Please try again."
+          : null;
+
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <p role="status" aria-live="polite">
+      {message}
+    </p>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -140,6 +162,9 @@ export default function LoginPage() {
                   {message}
                 </p>
               )}
+              <Suspense fallback={null}>
+                <LoginCallbackNotice />
+              </Suspense>
 
               <button
                 className="button button-primary button-large"
