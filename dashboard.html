@@ -60,103 +60,158 @@
                   <th scope="col">Email</th>
                   <th scope="col">Role</th>
                   <th scope="col">Status</th>
-                  <th scope="col"><span class="visually-hidden">Actions</span></th>
+                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td><span class="user-cell"><span class="user-avatar" aria-hidden="true">MC</span>Morgan Chen</span></td>
                   <td>morgan.chen@example.com</td>
-                  <td>Administrator</td>
+                  <td>Superadmin</td>
                   <td><span class="status-badge">Active</span></td>
-                  <td><button class="table-action" type="button" aria-label="Edit Morgan Chen">Edit</button></td>
+                  <td><button class="table-action" type="button" data-user-name="Morgan Chen" aria-haspopup="dialog" aria-controls="permissions-dialog">Edit Rights / Permissions</button></td>
                 </tr>
                 <tr>
                   <td><span class="user-cell"><span class="user-avatar avatar-blue" aria-hidden="true">RP</span>Riley Patel</span></td>
                   <td>riley.patel@example.com</td>
-                  <td>Manager</td>
+                  <td>Admin</td>
                   <td><span class="status-badge">Active</span></td>
-                  <td><button class="table-action" type="button" aria-label="Edit Riley Patel">Edit</button></td>
+                  <td><button class="table-action" type="button" data-user-name="Riley Patel" aria-haspopup="dialog" aria-controls="permissions-dialog">Edit Rights / Permissions</button></td>
                 </tr>
                 <tr>
                   <td><span class="user-cell"><span class="user-avatar avatar-gold" aria-hidden="true">SK</span>Sam Kim</span></td>
                   <td>sam.kim@example.com</td>
-                  <td>Team member</td>
+                  <td>User</td>
                   <td><span class="status-badge">Active</span></td>
-                  <td><button class="table-action" type="button" aria-label="Edit Sam Kim">Edit</button></td>
+                  <td><button class="table-action" type="button" data-user-name="Sam Kim" aria-haspopup="dialog" aria-controls="permissions-dialog">Edit Rights / Permissions</button></td>
                 </tr>
                 <tr>
                   <td><span class="user-cell"><span class="user-avatar" aria-hidden="true">AT</span>Alex Taylor</span></td>
                   <td>alex.taylor@example.com</td>
-                  <td>Team member</td>
+                  <td>User</td>
                   <td><span class="status-badge status-pending">Invited</span></td>
-                  <td><button class="table-action" type="button" aria-label="Edit Alex Taylor">Edit</button></td>
+                  <td><button class="table-action" type="button" data-user-name="Alex Taylor" aria-haspopup="dialog" aria-controls="permissions-dialog">Edit Rights / Permissions</button></td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <p class="table-note">Showing 4 sample team members</p>
+          <p class="table-note">Showing 4 sample team members <span id="permission-status" role="status" aria-live="polite"></span></p>
         </section>
       </main>
 
       <dialog class="permissions-dialog" id="permissions-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
         <div class="dialog-header">
           <div>
-            <h2 id="dialog-title">Roles &amp; Rights</h2>
-            <p id="dialog-description">Choose the access rights assigned to a workspace role.</p>
+            <h2 id="dialog-title">Edit Rights / Permissions</h2>
+            <p id="dialog-description">Update access rights for <span id="dialog-user-name">this user</span>.</p>
           </div>
-          <form method="dialog">
-            <button class="dialog-close" type="submit" aria-label="Close roles and rights dialog">&times;</button>
-          </form>
+          <button class="dialog-close" id="close-permissions" type="button" aria-label="Close permissions dialog">&times;</button>
         </div>
-        <form method="dialog">
+        <form id="permissions-form">
           <div class="dialog-body">
             <div class="form-field">
-              <label class="form-label" for="role">Workspace role</label>
+              <label class="form-label" for="role">Role</label>
               <select class="form-control" id="role" name="role">
-                <option>Administrator</option>
-                <option>Manager</option>
-                <option>Team member</option>
+                <option>Superadmin</option>
+                <option>Admin</option>
+                <option>User</option>
               </select>
             </div>
             <fieldset class="permission-list">
-              <legend>Access rights</legend>
+              <legend>Permissions</legend>
               <label class="permission-option">
-                <input type="checkbox" name="rights" value="users" checked>
-                <span><strong>Manage users</strong><span>Invite, update, and deactivate workspace members.</span></span>
+                <input type="checkbox" name="permissions" value="read">
+                <span><strong>Read</strong><span>View workspace information and records.</span></span>
               </label>
               <label class="permission-option">
-                <input type="checkbox" name="rights" value="roles" checked>
-                <span><strong>Manage roles and rights</strong><span>Assign workspace roles and configure permissions.</span></span>
+                <input type="checkbox" name="permissions" value="write">
+                <span><strong>Write</strong><span>Create and update workspace records.</span></span>
               </label>
               <label class="permission-option">
-                <input type="checkbox" name="rights" value="reports">
-                <span><strong>View reports</strong><span>Access workspace reports and activity summaries.</span></span>
+                <input type="checkbox" name="permissions" value="delete">
+                <span><strong>Delete</strong><span>Remove workspace records.</span></span>
               </label>
               <label class="permission-option">
-                <input type="checkbox" name="rights" value="settings">
-                <span><strong>Manage settings</strong><span>Update workspace preferences and configuration.</span></span>
+                <input type="checkbox" name="permissions" value="admin">
+                <span><strong>Admin access</strong><span>Manage users, roles, and workspace settings.</span></span>
               </label>
             </fieldset>
           </div>
           <div class="dialog-footer">
-            <button class="button button-secondary" type="submit">Cancel</button>
-            <button class="button button-primary" type="submit">Done</button>
+            <button class="button button-secondary" id="cancel-permissions" type="button">Cancel</button>
+            <button class="button button-primary" type="submit">Save changes</button>
           </div>
         </form>
       </dialog>
     </div>
     <script>
       const permissionsDialog = document.getElementById("permissions-dialog");
-      const openPermissionsButton = document.getElementById("open-permissions");
       const openPermissionsNav = document.getElementById("open-permissions-nav");
+      const permissionsForm = document.getElementById("permissions-form");
+      const roleSelect = document.getElementById("role");
+      const dialogUserName = document.getElementById("dialog-user-name");
+      const permissionStatus = document.getElementById("permission-status");
+      const permissionCheckboxes = [...permissionsForm.querySelectorAll('input[name="permissions"]')];
+      let activeUserRow = null;
+      const savedPermissions = new WeakMap();
+      const rolePermissions = {
+        Superadmin: ["read", "write", "delete", "admin"],
+        Admin: ["read", "write", "delete"],
+        User: ["read"]
+      };
 
-      openPermissionsButton.addEventListener("click", () => {
+      function setPermissions(permissions) {
+        permissionCheckboxes.forEach((checkbox) => {
+          checkbox.checked = permissions.includes(checkbox.value);
+        });
+      }
+
+      function openPermissions(button) {
+        activeUserRow = button ? button.closest("tr") : null;
+        const currentRole = activeUserRow ? activeUserRow.cells[2].textContent.trim() : roleSelect.value;
+        const userName = activeUserRow ? button.dataset.userName : `all users with the ${currentRole} role`;
+        const permissions = activeUserRow
+          ? savedPermissions.get(activeUserRow) || rolePermissions[currentRole] || []
+          : rolePermissions[currentRole] || [];
+        dialogUserName.textContent = userName;
+        roleSelect.value = currentRole;
+        setPermissions(permissions);
         permissionsDialog.showModal();
+      }
+
+      document.querySelectorAll(".table-action").forEach((button) => {
+        button.setAttribute("aria-label", `Edit Rights / Permissions for ${button.dataset.userName}`);
+        button.addEventListener("click", () => openPermissions(button));
       });
 
       openPermissionsNav.addEventListener("click", () => {
-        permissionsDialog.showModal();
+        openPermissions(null);
+      });
+
+      document.getElementById("open-permissions").addEventListener("click", () => {
+        openPermissions(null);
+      });
+      document.getElementById("close-permissions").addEventListener("click", () => permissionsDialog.close());
+      document.getElementById("cancel-permissions").addEventListener("click", () => permissionsDialog.close());
+
+      roleSelect.addEventListener("change", () => {
+        if (!activeUserRow) setPermissions(rolePermissions[roleSelect.value] || []);
+      });
+
+      permissionsForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const permissions = permissionCheckboxes
+          .filter((checkbox) => checkbox.checked)
+          .map((checkbox) => checkbox.value);
+        if (activeUserRow) {
+          activeUserRow.cells[2].textContent = roleSelect.value;
+          savedPermissions.set(activeUserRow, permissions);
+          permissionStatus.textContent = `Permissions updated for ${dialogUserName.textContent}.`;
+        } else {
+          rolePermissions[roleSelect.value] = permissions;
+          permissionStatus.textContent = `Default permissions updated for the ${roleSelect.value} role.`;
+        }
+        permissionsDialog.close();
       });
     </script>
   </body>
