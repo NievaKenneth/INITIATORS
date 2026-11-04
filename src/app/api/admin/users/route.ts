@@ -86,6 +86,11 @@ export async function GET() {
       });
 
       if (error) {
+        console.error("Supabase Auth user listing failed.", {
+          name: error.name,
+          code: error.code,
+          status: error.status,
+        });
         return NextResponse.json(
           { error: "Unable to load user accounts." },
           { status: 503 },
