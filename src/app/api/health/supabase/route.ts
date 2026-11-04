@@ -1,3 +1,4 @@
+
 export async function GET() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabasePublishableKey =
@@ -12,7 +13,9 @@ export async function GET() {
       `${supabaseUrl.replace(/\/+$/, "")}/rest/v1/`,
       {
         method: "HEAD",
-        headers: { apikey: supabasePublishableKey },
+        headers: {
+          apikey: supabasePublishableKey,
+        },
         cache: "no-store",
         signal: AbortSignal.timeout(5000),
       },

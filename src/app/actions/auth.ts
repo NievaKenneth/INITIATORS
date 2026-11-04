@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import {
   validateCredentials,
+  validateLoginCredentials,
   type AuthField,
 } from "@/lib/supabase/auth-validation";
 
@@ -21,8 +22,11 @@ type PreviousAuthActionState = AuthActionState | null;
 const unavailableMessage =
   "Authentication is temporarily unavailable. Please try again later.";
 
-function getValidatedCredentials(formData: FormData) {
-  const validation = validateCredentials(formData);
+function getValidatedCredentials(
+  formData: FormData,
+  validate = validateCredentials,
+) {
+  const validation = validate(formData);
 
   if (!validation.success) {
     return {
@@ -78,7 +82,7 @@ export async function login(
   _previousState: PreviousAuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const validated = getValidatedCredentials(formData);
+  const validated = getValidatedCredentials(formData, validateLoginCredentials);
   if (validated.state) {
     return validated.state;
   }

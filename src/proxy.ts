@@ -3,20 +3,48 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabasePublicConfig } from "./lib/supabase/config";
 
+function setAuthResponseCacheHeaders(
+  response: NextResponse,
+  isAuthResponse: boolean,
+) {
+  if (!isAuthResponse) {
+    return response;
+  }
+
+  response.headers.set(
+    "Cache-Control",
+    "private, no-cache, no-store, must-revalidate, max-age=0",
+  );
+  response.headers.set("Expires", "0");
+  response.headers.set("Pragma", "no-cache");
+
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   console.log("PROXY RUNNING:", request.nextUrl.pathname);
 
   const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
+  const isAuthResponse =
+    request.nextUrl.pathname.startsWith("/api/auth/") ||
+    request.nextUrl.pathname === "/auth/callback" ||
+    request.headers.has("next-action");
   const config = getSupabasePublicConfig();
 
   if (!config) {
     console.error("SUPABASE CONFIG MISSING");
 
     if (isDashboard) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return setAuthResponseCacheHeaders(
+        NextResponse.redirect(new URL("/login", request.url)),
+        isAuthResponse,
+      );
     }
 
-    return NextResponse.next({ request });
+    return setAuthResponseCacheHeaders(
+      NextResponse.next({ request }),
+      isAuthResponse,
+    );
   }
 
   let response = NextResponse.next({ request });
@@ -64,10 +92,15 @@ export async function proxy(request: NextRequest) {
     error: error?.message,
   });
 
+  setAuthResponseCacheHeaders(response, isAuthResponse);
+
   if (isDashboard && !user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+    return setAuthResponseCacheHeaders(
+      NextResponse.redirect(loginUrl),
+      isAuthResponse,
+    );
   }
 
   return response;

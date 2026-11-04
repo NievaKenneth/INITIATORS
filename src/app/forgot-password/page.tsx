@@ -1,47 +1,34 @@
-
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
-export default function ResetPasswordPage() {
-  const router = useRouter();
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setMessage("");
     setError("");
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/reset-password", {
+      const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email }),
       });
-
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || data.message || "Unable to reset password.");
+        setError(data.error || "Unable to request password reset.");
         return;
       }
 
-      setMessage(data.message || "Password updated successfully.");
-
-      setTimeout(() => router.push("/login"), 1500);
+      setMessage(data.message);
     } catch {
       setError("Unable to connect. Please try again.");
     } finally {
@@ -59,8 +46,8 @@ export default function ResetPasswordPage() {
 
         <div className="auth-intro-copy">
           <p className="eyebrow">Make room for progress</p>
-          <h1>A fresh start.</h1>
-          <p>Create a new password to secure your HOPE ERP account.</p>
+          <h1>Find your way back.</h1>
+          <p>Request a secure link to reset your HOPE ERP password.</p>
         </div>
 
         <p className="auth-aside-note">A clearer way to work, together.</p>
@@ -68,38 +55,25 @@ export default function ResetPasswordPage() {
 
       <section className="auth-panel">
         <div className="auth-card">
-          <h2>Choose a new password</h2>
+          <h2>Reset your password</h2>
           <p className="auth-description">
-            Enter your new password below.
+            Enter your account email and we’ll send reset instructions if an
+            account exists.
           </p>
 
           <form className="auth-form" onSubmit={handleSubmit}>
             <div className="form-field">
-              <label className="form-label" htmlFor="password">
-                New password
+              <label className="form-label" htmlFor="email">
+                Email address
               </label>
               <input
                 className="form-control"
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-field">
-              <label className="form-label" htmlFor="confirm-password">
-                Confirm new password
-              </label>
-              <input
-                className="form-control"
-                id="confirm-password"
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                id="email"
+                type="email"
+                autoComplete="email"
+                maxLength={254}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
                 required
               />
             </div>
@@ -112,7 +86,7 @@ export default function ResetPasswordPage() {
               type="submit"
               disabled={loading}
             >
-              {loading ? "Updating..." : "Update Password"}
+              {loading ? "Sending..." : "Send reset link"}
             </button>
           </form>
 

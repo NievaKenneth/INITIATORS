@@ -3,6 +3,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,7 +31,13 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      const destination =
+        result.destination === "/user-dashboard" ||
+        result.destination === "/dashboard"
+          ? result.destination
+          : "/";
+
+      router.replace(destination);
       router.refresh();
     } catch {
       setMessage("Unable to connect. Please try again.");
@@ -47,7 +54,7 @@ export default function LoginPage() {
 
       <main className="auth-shell" id="main">
         <section className="auth-intro" aria-label="Welcome to HOPE ERP">
-          <a className="brand" href="/" aria-label="HOPE ERP home">
+          <Link className="brand" href="/" aria-label="HOPE ERP home">
             <span className="brand-mark" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none">
                 <path
@@ -66,8 +73,10 @@ export default function LoginPage() {
                 />
               </svg>
             </span>
-            <span>HOPE <span aria-hidden="true">ERP</span></span>
-          </a>
+            <span>
+              HOPE <span aria-hidden="true">ERP</span>
+            </span>
+          </Link>
 
           <div className="auth-intro-copy">
             <p className="eyebrow">
@@ -142,15 +151,15 @@ export default function LoginPage() {
             </form>
 
             <div className="auth-meta">
-              <a href="/reset-password">Forgot your password?</a>
+              <Link href="/forgot-password">Forgot your password?</Link>
               <span>
-                New to HOPE? <a href="/register">Create an account</a>
+                New to HOPE? <Link href="/register">Create an account</Link>
               </span>
             </div>
 
-            <a className="auth-back" href="/">
+            <Link className="auth-back" href="/">
               ← Back to home
-            </a>
+            </Link>
           </div>
         </section>
       </main>

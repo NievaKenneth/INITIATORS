@@ -23,6 +23,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const fullName =
+    typeof body.fullName === "string"
+      ? body.fullName.normalize("NFC").trim().replace(/\s+/g, " ")
+      : "";
+
+  if (
+    fullName.length < 2 ||
+    fullName.length > 100 ||
+    /[\u0000-\u001f\u007f]/.test(fullName)
+  ) {
+    return NextResponse.json(
+      { error: "Name must be between 2 and 100 valid characters." },
+      { status: 400 },
+    );
+  }
+
   if (!getSupabasePublicConfig()) {
     return NextResponse.json(
       { error: "Authentication is not configured." },
@@ -32,7 +48,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.signUp(validation.credentials);
+    const { error } = await supabase.auth.signUp({
+      ...validation.credentials,
+      options: {
+        data: { full_name: fullName },
+      },
+    });
 
     if (error) {
       if (error.status === 429) {

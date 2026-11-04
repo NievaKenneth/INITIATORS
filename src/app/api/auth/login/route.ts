@@ -1,3 +1,4 @@
+
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -5,7 +6,7 @@ import {
   invalidJsonResponse,
   readJsonObject,
 } from "@/lib/supabase/http";
-import { validateCredentialsInput } from "@/lib/supabase/auth-validation";
+import { validateLoginCredentialsInput } from "@/lib/supabase/auth-validation";
 
 export async function POST(request: NextRequest) {
   const body = await readJsonObject(request);
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
     return invalidJsonResponse();
   }
 
-  const validation = validateCredentialsInput(body.email, body.password);
+  const validation = validateLoginCredentialsInput(body.email, body.password);
 
   if (!validation.success) {
     return NextResponse.json(
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.signInWithPassword(
+    const { data, error } = await supabase.auth.signInWithPassword(
       validation.credentials,
     );
 
@@ -57,7 +58,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ message: "Signed in successfully." });
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role, status")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    if (profileError || !profile || profile.status !== "approved") {
+      await supabase.auth.signOut();
+
+      return NextResponse.json(
+        { error: "Your account is not approved or could not be verified." },
+        { status: 403 },
+      );
+    }
+
+    if (
+      profile.role !== "admin" &&
+      profile.role !== "superadmin" &&
+      profile.role !== "user"
+    ) {
+      await supabase.auth.signOut();
+
+      return NextResponse.json(
+        { error: "Your account role could not be verified." },
+        { status: 403 },
+      );
+    }
+
+    return NextResponse.json({
+      message: "Signed in successfully.",
+      destination: "/user-dashboard",
+    });
   } catch {
     console.error("Supabase sign-in request failed.");
     return NextResponse.json(

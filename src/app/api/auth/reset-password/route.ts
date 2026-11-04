@@ -77,6 +77,20 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
+      if (error.status === 429) {
+        return NextResponse.json(
+          { error: "Too many attempts. Please try again later." },
+          { status: 429 },
+        );
+      }
+
+      if (error.status && error.status >= 500) {
+        return NextResponse.json(
+          { error: "Authentication is temporarily unavailable." },
+          { status: 503 },
+        );
+      }
+
       return NextResponse.json(
         { error: "Unable to update the password. Please try again." },
         { status: 400 },

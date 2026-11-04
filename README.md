@@ -21,6 +21,10 @@ Required environment variables:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `APP_URL` (server-only application origin for password-recovery redirects)
+- `SUPABASE_SERVICE_ROLE_KEY` (server-only; used by protected admin user creation and listing)
+
+Never prefix the service-role key with `NEXT_PUBLIC_`, expose it in a client
+component, or commit its real value. `.env.example` contains only a placeholder.
 
 The reusable `register` and `login` Server Actions are in `src/app/actions/auth.ts`. They accept email and password through `useActionState`. Email is normalized and validated on the server. Passwords must be 12–128 characters and are sent directly to Supabase Auth, never stored in an application table. Registration responses do not disclose whether an email is already registered.
 
@@ -51,13 +55,24 @@ existing Auth accounts, or bootstrap a superadmin.
 
 RLS allows authenticated users to read their own profile and module
 permissions. Approved superadmins can read all profiles, permissions, and
-approval logs. Admins do not receive administrative table access or RPC
-privileges from this migration. Users can update only their own `full_name`;
-direct table writes for role, status, permissions, and approval logs are
-revoked. Superadmin-only database functions perform profile review, role/status
-changes, and permission upserts/deletes. Review RPCs record the authenticated
-reviewer in `approval_logs`. These database checks are independent of
-application redirects or UI visibility.
+approval logs. Users can update only their own `full_name`; direct table writes
+for role, status, permissions, and approval logs are revoked. Superadmin-only
+database functions perform profile review, role/status changes, and permission
+upserts/deletes. Review RPCs record the authenticated reviewer in
+`approval_logs`. These database checks are independent of application
+redirects or UI visibility.
+
+The follow-up migration
+`supabase/migrations/20261025090000_admin_user_management_access.sql` allows
+approved admins to read profiles through RLS. The user-management migration
+`supabase/migrations/20261025100000_user_management_actions.sql` restricts
+profile review to pending accounts, adds a role-only RPC for superadmins, and
+adds block/unblock for approved admins and superadmins. The protected
+`/api/admin/users` endpoint creates Auth accounts with the existing trigger's
+`user`/`pending` defaults; it never accepts a role or approval status from the
+request. To apply pending migrations to a running local Supabase stack, run
+`supabase migration up`. For a linked remote project, review the SQL and run
+`supabase db push`.
 
 An approved superadmin cannot reject their own profile or use the access RPC
 to remove their own `superadmin` role or `approved` status. Self-targeted
@@ -278,7 +293,63 @@ JSON endpoints:
 
 Password recovery uses a PKCE callback at `/auth/callback`. The callback destination is fixed to `/reset-password`, and the reset endpoint requires a verified Supabase recovery session.
 
-Login, registration, forgot-password, and reset-password UI forms have not yet been connected. The profile and permission tables and their RLS policies are defined in the migration below; application-level role-based redirects and protected module routes still need to be implemented. Roles are not accepted from registration input.
+Login, registration, forgot-password, and reset-password UI forms have not yet been connected. The profile and permission tables and their RLS policies are defined in the migration below. Roles are not accepted from registration input. The dashboard requires an approved `admin` or `superadmin` profile; protected module routes and admin APIs have not been implemented.
+
+### Local test accounts
+
+The test-account seed command is strictly limited to a local Supabase Auth URL
+(`http://localhost`, `http://127.0.0.1`, or `http://[::1]`). It refuses to run
+if any superadmin or any configured test email already exists. It creates three
+confirmed local Auth users, bootstraps only the newly-created superadmin profile
+with the local service-role key, then assigns the `user` and `admin` profiles
+through the existing `set_profile_access` RPC while authenticated as that
+superadmin. It verifies all three profiles are `approved` and verifies that
+both non-superadmin roles receive SQLSTATE `42501` from the role-management
+RPC. It does not touch hosted Supabase projects or promote existing accounts.
+
+Apply the migration to a disposable local Supabase instance first. In
+PowerShell, set these values only in the current shell; use unique test emails
+and strong test-only passwords. Do not commit the service-role key or test
+passwords, and do not set the service-role key under a `NEXT_PUBLIC_` name:
+
+```powershell
+$env:NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:54321"
+$env:NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "<local-publishable-key>"
+$env:SUPABASE_SERVICE_ROLE_KEY = "<local-service-role-key>"
+$env:SUPABASE_TEST_USER_EMAIL = "hope-user@example.test"
+$env:SUPABASE_TEST_USER_PASSWORD = "<unique-test-password-12-or-more-characters>"
+$env:SUPABASE_TEST_ADMIN_EMAIL = "hope-admin@example.test"
+$env:SUPABASE_TEST_ADMIN_PASSWORD = "<unique-test-password-12-or-more-characters>"
+$env:SUPABASE_TEST_SUPERADMIN_EMAIL = "hope-superadmin@example.test"
+$env:SUPABASE_TEST_SUPERADMIN_PASSWORD = "<unique-test-password-12-or-more-characters>"
+npm.cmd run seed:test-accounts
+```
+
+Required seed environment variables are `NEXT_PUBLIC_SUPABASE_URL`,
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+`SUPABASE_TEST_USER_EMAIL`, `SUPABASE_TEST_USER_PASSWORD`,
+`SUPABASE_TEST_ADMIN_EMAIL`, `SUPABASE_TEST_ADMIN_PASSWORD`,
+`SUPABASE_TEST_SUPERADMIN_EMAIL`, and
+`SUPABASE_TEST_SUPERADMIN_PASSWORD`. The script uses the service-role key only
+in the local Node process; it is never imported by app code or exposed to a
+browser. The three passwords are used for local testing only.
+
+Sign in at `/login` with each account and confirm dashboard access: approved
+admins and superadmins are allowed; users, pending accounts, and unauthenticated
+visitors are redirected away. The proxy redirects unauthenticated dashboard
+requests to `/login`; the server-rendered dashboard independently checks the
+authenticated user's approved profile and role. Current `/api/auth/*` and
+`/api/health/supabase` endpoints are public authentication/health endpoints;
+there are no application admin-only or superadmin-only API routes yet.
+
+Database authorization remains stricter than the dashboard UI: the migration
+grants role/status management and module-permission RPC execution only to an
+approved superadmin. Admins have the same database privileges as approved
+regular users, and direct role/status writes remain revoked for authenticated
+users. The seed script exercises the role-management denial for both `user`
+and `admin`; use the SQL authorization checks above for broader RLS and RPC
+coverage. No superadmin permissions beyond those declared by the migration
+should be inferred from the dashboard's demo controls.
 
 For local testing, set `APP_URL` to `http://localhost:3000`. Add the callback URL to Supabase Auth's allowed redirect URLs and configure the recovery email template. Verify the full flow using your actual Supabase project.
 
