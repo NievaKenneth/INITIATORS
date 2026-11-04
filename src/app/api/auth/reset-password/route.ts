@@ -97,6 +97,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let auditFailed = false;
+
+    try {
+      const { error: auditError } = await supabase.rpc("record_password_reset");
+      auditFailed = Boolean(auditError);
+    } catch {
+      auditFailed = true;
+    }
+
+    if (auditFailed) {
+      console.error("Password recovery audit event could not be recorded.");
+    }
+
     let signOutFailed = false;
 
     try {
@@ -114,6 +127,16 @@ export async function POST(request: NextRequest) {
         {
           error:
             "Your password was updated, but sign-out failed. Please close your session manually.",
+        },
+        { status: 503 },
+      );
+    }
+
+    if (auditFailed) {
+      return NextResponse.json(
+        {
+          error:
+            "Your password was updated, but the audit event could not be recorded. Please contact support.",
         },
         { status: 503 },
       );

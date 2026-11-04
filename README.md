@@ -86,6 +86,16 @@ Approval-log profile references use `ON DELETE RESTRICT` to retain the review
 history; account deletion therefore requires a separately reviewed retention
 or archival process.
 
+The security-audit migration adds `public.security_audit_log` for profile
+creation/deletion, role or status changes, permission changes, completed
+password recovery, and administrator-created accounts. Events retain actor
+and affected-user IDs plus relevant before/after role, status, or permission
+values. Events record a user actor ID when available and otherwise mark the
+actor as the system.
+Only approved superadmins can read the audit log; authenticated users cannot
+write it directly. The password-recovery RPC requires a recovery-authenticated
+session.
+
 ### Initial superadmin bootstrap
 
 Do not use public registration to bootstrap a superadmin. First have the
