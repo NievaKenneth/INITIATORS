@@ -278,6 +278,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { error: auditError } = await admin
+      .from("security_audit_log")
+      .insert({
+        actor_user_id: user.id,
+        actor_type: "user",
+        target_user_id: data.user.id,
+        action: "admin.account_created",
+        after_values: { role: "user", status: "pending" },
+      });
+
+    if (auditError) {
+      console.error("Admin account creation audit event could not be recorded.");
+      return NextResponse.json(
+        {
+          error:
+            "The account was created, but its audit event could not be recorded.",
+        },
+        { status: 503 },
+      );
+    }
+
     return NextResponse.json(
       {
         user: {
