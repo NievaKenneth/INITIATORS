@@ -165,6 +165,10 @@ do not weaken the one-time guard.
 
 ### SQL authorization checks
 
+The automated pgTAP suite is in `supabase/tests/database`. Run it against a
+disposable local Supabase stack with `supabase test db`; it does not target a
+linked hosted project.
+
 Run these checks only in a disposable project. Prepare fixture accounts for
 each listed profile state and substitute their UUIDs below. In the Supabase SQL
 Editor, `SET LOCAL ROLE` plus `request.jwt.claim.sub` simulates an authenticated
