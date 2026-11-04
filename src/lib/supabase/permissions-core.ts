@@ -57,11 +57,13 @@ export const NO_PERMISSION_FLAGS: PermissionFlags = {
 export type PermissionProfile = {
   role: UserRole;
   status: "approved";
+  full_name?: string | null;
 };
 
 export type CurrentUserPermissionSummary = {
   userId: string;
   role: UserRole;
+  fullName: string | null;
   permissions: PermissionFlags;
   visibleModules: PermissionModule[];
 };
@@ -292,6 +294,7 @@ export function createPermissionHelpers(
       return {
         userId: context.userId,
         role: context.profile.role,
+        fullName: context.profile.full_name?.trim() || null,
         permissions: { ...NO_PERMISSION_FLAGS },
         visibleModules: getVisibleModulesForUser(
           context.profile.role,
@@ -310,6 +313,7 @@ export function createPermissionHelpers(
     return {
       userId: context.userId,
       role: context.profile.role,
+      fullName: context.profile.full_name?.trim() || null,
       permissions: modulePermission
         ? {
             can_view: modulePermission.can_view,

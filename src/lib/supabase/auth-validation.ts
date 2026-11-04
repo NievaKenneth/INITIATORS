@@ -16,6 +16,23 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 12;
 const MAX_PASSWORD_LENGTH = 128;
 
+export function normalizeFullName(rawFullName: unknown): string | null {
+  const fullName =
+    typeof rawFullName === "string"
+      ? rawFullName.normalize("NFC").trim().replace(/\s+/g, " ")
+      : "";
+
+  if (
+    fullName.length < 2 ||
+    fullName.length > 100 ||
+    /[\u0000-\u001f\u007f]/.test(fullName)
+  ) {
+    return null;
+  }
+
+  return fullName;
+}
+
 export function validateEmail(rawEmail: unknown):
   | { success: true; email: string }
   | { success: false; message: string } {

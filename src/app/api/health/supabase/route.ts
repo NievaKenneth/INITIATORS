@@ -1,3 +1,14 @@
+function healthResponse(status: "ok" | "unavailable" | "not_configured") {
+  return Response.json(
+    {
+      status,
+      checked: "supabase_auth_api",
+      database: "not_checked",
+      schema: "not_checked",
+    },
+    { status: status === "ok" ? 200 : 503 },
+  );
+}
 
 export async function GET() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -5,14 +16,14 @@ export async function GET() {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!supabaseUrl || !supabasePublishableKey) {
-    return Response.json({ status: "not_configured" }, { status: 503 });
+    return healthResponse("not_configured");
   }
 
   try {
     const response = await fetch(
-      `${supabaseUrl.replace(/\/+$/, "")}/rest/v1/`,
+      `${supabaseUrl.replace(/\/+$/, "")}/auth/v1/health`,
       {
-        method: "HEAD",
+        method: "GET",
         headers: {
           apikey: supabasePublishableKey,
         },
@@ -21,16 +32,20 @@ export async function GET() {
       },
     );
 
+    await response.body?.cancel();
+
     if (!response.ok) {
-      console.error(
-        `Supabase REST health check returned HTTP ${response.status}.`,
-      );
-      return Response.json({ status: "unavailable" }, { status: 503 });
+      console.error("Supabase Auth API health check failed.", {
+        status: response.status,
+      });
+      return healthResponse("unavailable");
     }
 
-    return Response.json({ status: "ok" });
+    return healthResponse("ok");
   } catch (error) {
-    console.error("Supabase REST health check failed.", error);
-    return Response.json({ status: "unavailable" }, { status: 503 });
+    console.error("Supabase Auth API health check request failed.", {
+      error: error instanceof Error ? error.name : "UnknownError",
+    });
+    return healthResponse("unavailable");
   }
 }

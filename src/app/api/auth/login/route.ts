@@ -45,6 +45,16 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      if (error.code === "email_not_confirmed") {
+        return NextResponse.json(
+          {
+            error:
+              "Please confirm your email address using the link we sent before signing in.",
+          },
+          { status: 403 },
+        );
+      }
+
       if (error.status && error.status >= 500) {
         return NextResponse.json(
           { error: "Authentication is temporarily unavailable." },

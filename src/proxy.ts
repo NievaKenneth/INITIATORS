@@ -22,6 +22,10 @@ function setAuthResponseCacheHeaders(
 }
 
 export async function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname === "/register.html") {
+    return NextResponse.redirect(new URL("/register", request.url), 308);
+  }
+
   console.log("PROXY RUNNING:", request.nextUrl.pathname);
 
   const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");

@@ -300,13 +300,18 @@ test("permission lookup failures do not produce dashboard module tiles", async (
 
 test("current-user API summary exposes server-derived visible modules", async () => {
   const allowed = makeHelpers({
-    profile: { role: "admin", status: "approved" },
+    profile: {
+      role: "admin",
+      status: "approved",
+      full_name: "Casey Example",
+    },
     permissions: [{ ...permission, can_view: true }],
   });
   const allowedSummary = await allowed.getCurrentUserPermissionSummary();
 
   assert.equal(allowedSummary.userId, userId);
   assert.equal(allowedSummary.role, "admin");
+  assert.equal(allowedSummary.fullName, "Casey Example");
   assert.deepEqual(allowedSummary.visibleModules, ["users"]);
 
   const missing = makeHelpers({
@@ -315,6 +320,7 @@ test("current-user API summary exposes server-derived visible modules", async ()
   });
   const missingSummary = await missing.getCurrentUserPermissionSummary();
 
+  assert.equal(missingSummary.fullName, null);
   assert.deepEqual(missingSummary.visibleModules, []);
 });
 
