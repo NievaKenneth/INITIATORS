@@ -26,6 +26,26 @@ Required environment variables:
 Never prefix the service-role key with `NEXT_PUBLIC_`, expose it in a client
 component, or commit its real value. `.env.example` contains only a placeholder.
 
+## Netlify Deployment
+
+The root `netlify.toml` builds this Next.js app from the repository root with
+`npm run build` and enables Netlify's Next.js runtime (the OpenNext adapter).
+The adapter manages its own publish output; do not set a static publish
+directory or publish the repository root, which contains legacy HTML files.
+
+In the Netlify site settings, connect `NievaKenneth/INITIATORS`, set the
+production branch to `main`, and configure these environment variables for the
+production deploy context:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (server-only; never expose or prefix with `NEXT_PUBLIC_`)
+- `APP_URL` (the production site origin, such as `https://your-site.netlify.app`)
+
+Add `${APP_URL}/auth/callback` to the Supabase project's allowed redirect URLs.
+Trigger a new Netlify deploy after changing build settings or environment
+variables.
+
 The reusable `register` and `login` Server Actions are in `src/app/actions/auth.ts`. They accept email and password through `useActionState`. Email is normalized and validated on the server. Passwords must be 12–128 characters and are sent directly to Supabase Auth, never stored in an application table. Registration responses do not disclose whether an email is already registered.
 
 `logout` signs out and redirects to `/`. `getCurrentUser` verifies the current user, and `requireUser` redirects unauthenticated users to `/login`. Use these helpers in server-side code before returning protected data. Next.js `proxy.ts` refreshes Supabase sessions but is not an authorization boundary.
