@@ -42,6 +42,11 @@ type UserListResponse = {
   currentUser: CurrentUser;
 };
 
+type DashboardContentProps = {
+  accountName: string;
+  accountEmail: string;
+};
+
 const emptyPermissionFlags: PermissionFlags = {
   can_view: false,
   can_add: false,
@@ -89,7 +94,14 @@ function avatarInitials(name: string | null) {
   );
 }
 
-export default function DashboardPage() {
+function displayName(user: ManagedUser) {
+  return user.full_name?.trim() || "Unnamed User";
+}
+
+export default function DashboardPage({
+  accountName,
+  accountEmail,
+}: DashboardContentProps) {
   const router = useRouter();
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
@@ -122,6 +134,12 @@ export default function DashboardPage() {
     currentUser?.role === "superadmin" || currentUser?.permissions.can_add;
   const canEditUsers =
     currentUser?.role === "superadmin" || currentUser?.permissions.can_edit;
+  const displayedAccountName =
+    currentUser?.name?.trim() ||
+    accountName ||
+    currentUser?.email ||
+    accountEmail ||
+    "Account";
 
   const fetchUsers = useCallback(async (): Promise<UserListResponse> => {
     const response = await fetch("/api/admin/users", {
@@ -536,10 +554,10 @@ export default function DashboardPage() {
 
           <div className="app-user">
             <span className="user-avatar avatar-gold" aria-hidden="true">
-              {avatarInitials(currentUser?.name ?? null)}
+              {avatarInitials(displayedAccountName)}
             </span>
             <span>
-              {currentUser?.name || currentUser?.email || "Loading account"}
+              {displayedAccountName}
               {currentUser && (
                 <small style={{ display: "block" }}>
                   {roleLabel(currentUser.role)}
@@ -634,9 +652,9 @@ export default function DashboardPage() {
                             className="user-avatar"
                             aria-hidden="true"
                           >
-                            {avatarInitials(user.full_name)}
+                            {avatarInitials(displayName(user))}
                           </span>
-                          {user.full_name || "Unnamed user"}
+                          {displayName(user)}
                         </span>
                       </td>
                       <td>{user.email || "—"}</td>
@@ -645,7 +663,7 @@ export default function DashboardPage() {
                         currentUser.id !== user.id ? (
                           <select
                             className="form-control"
-                            aria-label={`Role for ${user.full_name || user.email || "user"}`}
+                            aria-label={`Role for ${displayName(user)}`}
                             value={user.role}
                             disabled={actionUserId !== null}
                             onChange={(event) => {
@@ -940,7 +958,7 @@ export default function DashboardPage() {
                 <option value="">Select a user</option>
                 {users.map((user) => (
                   <option value={user.id} key={user.id}>
-                    {user.full_name || user.email || "Unnamed user"} (
+                    {displayName(user)} (
                     {roleLabel(user.role)})
                   </option>
                 ))}

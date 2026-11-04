@@ -4,10 +4,11 @@ import {
   PermissionVerificationError,
   requireCurrentUserModulePermission,
 } from "@/lib/supabase/permissions";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import DashboardContent from "./dashboard-content";
 
 export default async function DashboardPage() {
-  await requireUser();
+  const user = await requireUser();
 
   try {
     await requireCurrentUserModulePermission("users", "can_view");
@@ -38,5 +39,34 @@ export default async function DashboardPage() {
     throw error;
   }
 
-  return <DashboardContent />;
+  let accountName =
+    typeof user.user_metadata.full_name === "string"
+      ? user.user_metadata.full_name.trim()
+      : "";
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Current user's display name could not be loaded.", {
+        code: error.code,
+      });
+    } else if (typeof profile?.full_name === "string") {
+      accountName = profile.full_name.trim();
+    }
+  } catch {
+    console.error("Current user's display name lookup failed.");
+  }
+
+  return (
+    <DashboardContent
+      accountName={accountName}
+      accountEmail={user.email ?? ""}
+    />
+  );
 }

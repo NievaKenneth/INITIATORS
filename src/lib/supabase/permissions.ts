@@ -22,7 +22,7 @@ const permissionHelpers = createPermissionHelpers(
     const supabase = await createSupabaseServerClient();
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("role, status")
+      .select("role, status, full_name")
       .eq("id", user.id)
       .maybeSingle();
 
