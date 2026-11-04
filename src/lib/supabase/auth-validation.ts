@@ -88,8 +88,53 @@ export function validateCredentialsInput(
   };
 }
 
+export function validateLoginCredentialsInput(
+  rawEmail: unknown,
+  rawPassword: unknown,
+): CredentialsValidation {
+  const emailValidation = validateEmail(rawEmail);
+  const password =
+    typeof rawPassword === "string" ? rawPassword : "";
+  const fieldErrors: Partial<Record<AuthField, string>> = {};
+
+  if (!emailValidation.success) {
+    fieldErrors.email = emailValidation.message;
+  }
+
+  if (password.length === 0) {
+    fieldErrors.password = "Password is required.";
+  } else if (password.length > MAX_PASSWORD_LENGTH) {
+    fieldErrors.password = "Password must be 128 characters or fewer.";
+  }
+
+  if (
+    !emailValidation.success ||
+    password.length === 0 ||
+    password.length > MAX_PASSWORD_LENGTH
+  ) {
+    return { success: false, fieldErrors };
+  }
+
+  return {
+    success: true,
+    credentials: {
+      email: emailValidation.email,
+      password,
+    },
+  };
+}
+
 export function validateCredentials(formData: FormData): CredentialsValidation {
   return validateCredentialsInput(
+    formData.get("email"),
+    formData.get("password"),
+  );
+}
+
+export function validateLoginCredentials(
+  formData: FormData,
+): CredentialsValidation {
+  return validateLoginCredentialsInput(
     formData.get("email"),
     formData.get("password"),
   );

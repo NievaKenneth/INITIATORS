@@ -1,3 +1,4 @@
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -8,7 +9,7 @@ export default function Home() {
 
       <header className="site-header">
         <nav className="nav container" aria-label="Main navigation">
-          <a className="brand" href="/" aria-label="HOPE ERP home">
+          <Link className="brand" href="/" aria-label="HOPE ERP home">
             <span className="brand-mark" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none">
                 <path
@@ -30,15 +31,15 @@ export default function Home() {
             <span>
               HOPE <span aria-hidden="true">ERP</span>
             </span>
-          </a>
+          </Link>
 
           <div className="nav-actions">
-            <a className="button button-secondary" href="/login">
+            <Link className="button button-secondary" href="/login">
               Sign In
-            </a>
-            <a className="button button-primary" href="/register">
+            </Link>
+            <Link className="button button-primary" href="/register">
               Register
-            </a>
+            </Link>
           </div>
         </nav>
       </header>
@@ -62,7 +63,7 @@ export default function Home() {
               </p>
 
               <div className="hero-actions">
-                <a
+                <Link
                   className="button button-primary button-large"
                   href="/register"
                 >
@@ -82,13 +83,13 @@ export default function Home() {
                       strokeLinejoin="round"
                     />
                   </svg>
-                </a>
-                <a
+                </Link>
+                <Link
                   className="button button-secondary button-large"
                   href="/login"
                 >
                   Sign In
-                </a>
+                </Link>
               </div>
 
               <p className="hero-note">
@@ -132,7 +133,10 @@ export default function Home() {
                 <div className="preview-content">
                   <p className="preview-label">Workspace at a glance</p>
 
-                  <div className="stat-grid" aria-label="Illustrative workspace summary">
+                  <div
+                    className="stat-grid"
+                    aria-label="Illustrative workspace summary"
+                  >
                     <div className="stat-card">
                       <span className="stat-value">12</span>
                       <span className="stat-name">Active projects</span>
@@ -180,7 +184,10 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="section container" aria-labelledby="features-title">
+        <section
+          className="section container"
+          aria-labelledby="features-title"
+        >
           <div className="section-heading">
             <p className="eyebrow">
               <span className="eyebrow-dot" aria-hidden="true" />
@@ -255,10 +262,13 @@ export default function Home() {
 
       <footer className="site-footer">
         <div className="footer-inner container">
-          <p>&copy; {new Date().getFullYear()} HOPE ERP. Built for better work, together.</p>
+          <p>
+            &copy; {new Date().getFullYear()} HOPE ERP. Built for better work,
+            together.
+          </p>
           <div className="footer-links">
-            <a href="/login">Sign In</a>
-            <a href="/register">Register</a>
+            <Link href="/login">Sign In</Link>
+            <Link href="/register">Register</Link>
           </div>
         </div>
       </footer>
